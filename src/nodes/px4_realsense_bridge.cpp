@@ -13,7 +13,7 @@ PX4_Realsense_Bridge::PX4_Realsense_Bridge(const ros::NodeHandle& nh)
 
   // initialize subscribers
   odom_sub_ = nh_.subscribe<const nav_msgs::Odometry&>(
-      "/camera/odom/sample_throttled", 10, &PX4_Realsense_Bridge::odomCallback, this);
+      "odometry", 10, &PX4_Realsense_Bridge::odomCallback, this);
   // publishers
   mavros_odom_pub_ =
       nh_.advertise<nav_msgs::Odometry>("/mavros/odometry/out", 10);
@@ -35,8 +35,21 @@ void PX4_Realsense_Bridge::odomCallback(const nav_msgs::Odometry& msg) {
 
   // publish odometry msg
   nav_msgs::Odometry output = msg;
-  output.header.frame_id = msg.header.frame_id;
-  output.child_frame_id = msg.child_frame_id;
+  output.header.frame_id = "odom";
+  output.child_frame_id = "base_link";
+  
+  msg.pose.covariance[0] == 0.01;
+  msg.pose.covariance[1] == 0.01;
+  msg.pose.covariance[2] == 0.01;
+
+  msg.pose.covariance[4] == 0.001;
+  msg.pose.covariance[5] == 0.001;
+  msg.pose.covariance[6] == 0.001;
+
+  msg.twist.covariance[4] == 0.001;
+  msg.twist.covariance[5] == 0.001;
+  msg.twist.covariance[6] == 0.001;
+
   mavros_odom_pub_.publish(output);
 
   flag_first_pose_received = true;
@@ -46,23 +59,7 @@ void PX4_Realsense_Bridge::odomCallback(const nav_msgs::Odometry& msg) {
 
     last_system_status_ = system_status_;
 
-    // check confidence in vision estimate by looking at covariance
-    if( msg.pose.covariance[0] > 0.1 ) // low confidence -> reboot companion
-    {
-      system_status_ = MAV_STATE::MAV_STATE_FLIGHT_TERMINATION;
-    }
-    else if( msg.pose.covariance[0] == 0.1 ) // medium confidence
-    {
-      system_status_ = MAV_STATE::MAV_STATE_CRITICAL;
-    }
-    else if( msg.pose.covariance[0] == 0.01 ) // high confidence
-    {
-      system_status_ = MAV_STATE::MAV_STATE_ACTIVE;
-    }
-    else
-    {
-      ROS_WARN_STREAM("Unexpected vision sensor variance");
-    }  
+    system_status_ = MAV_STATE::MAV_STATE_ACTIVE;
 
     // publish system status immediately if it changed
     if( last_system_status_ != system_status_ )
@@ -95,7 +92,7 @@ void PX4_Realsense_Bridge::publishSystemStatus(){
       // check if we received an recent update
       // otherwise let the companion computer restart
       if( (ros::Time::now()-last_callback_time) > ros::Duration(0.5) ){
-        ROS_WARN_STREAM("Stopped receiving data from T265");
+        ROS_WARN_STREAM("Stopped receiving data from VINS");
         system_status_ = MAV_STATE::MAV_STATE_FLIGHT_TERMINATION;
       }
 
