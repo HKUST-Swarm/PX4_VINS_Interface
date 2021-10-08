@@ -5,6 +5,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <eigen3/Eigen/Eigen>
 
 namespace bridge {
 
@@ -38,17 +39,23 @@ void PX4_Realsense_Bridge::odomCallback(const nav_msgs::Odometry& msg) {
   output.header.frame_id = "odom";
   output.child_frame_id = "base_link";
   
-  msg.pose.covariance[0] == 0.01;
-  msg.pose.covariance[1] == 0.01;
-  msg.pose.covariance[2] == 0.01;
+  Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor>> pose_cov(output.pose.covariance.data());
+  Eigen::Map<Eigen::Matrix<double, 6, 6, Eigen::RowMajor>> twist_cov(output.pose.covariance.data());
+  pose_cov(0, 0) == 0.01;
+  pose_cov(1, 1) == 0.01;
+  pose_cov(2, 2) == 0.01;
 
-  msg.pose.covariance[4] == 0.001;
-  msg.pose.covariance[5] == 0.001;
-  msg.pose.covariance[6] == 0.001;
+  pose_cov(3, 3) == 0.01;
+  pose_cov(4, 4) == 0.01;
+  pose_cov(5, 5) == 0.01;
 
-  msg.twist.covariance[4] == 0.001;
-  msg.twist.covariance[5] == 0.001;
-  msg.twist.covariance[6] == 0.001;
+  twist_cov(3, 3) == 0.01;
+  twist_cov(4, 4) == 0.01;
+  twist_cov(5, 5) == 0.01;
+
+  twist_cov(3, 3) == 0.01;
+  twist_cov(4, 4) == 0.01;
+  twist_cov(5, 5) == 0.01;
 
   mavros_odom_pub_.publish(output);
 

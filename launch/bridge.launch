@@ -11,7 +11,7 @@
 
   <!-- Bridge node -->
   <node name="px4_realsense_bridge_node" pkg="px4_realsense_bridge" type="px4_realsense_bridge_node" output="screen" >
-  <remap from="odometry" to="/vins_estimator/odometry" />
+  <remap from="~odometry" to="/vins_estimator/imu_propagate" />
   </node>
 
 </launch>
